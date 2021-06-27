@@ -3,22 +3,42 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
 
 public class MainManager : MonoBehaviour
 {
+    public static MainManager Instance;
+
     public Brick BrickPrefab;
     public int LineCount = 6;
     public Rigidbody Ball;
 
     public Text ScoreText;
     public GameObject GameOverText;
+    public Text BestScoreText;
+    
     
     private bool m_Started = false;
-    private int m_Points;
+    public int m_Points;
+    public int m_BestPoints;
     
-    private bool m_GameOver = false;
+    
+    public bool m_GameOver = false;
 
-    
+    public void Awake()
+    {
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+        if (PlayerPrefs.HasKey("SavePoints"))
+        {
+            m_BestPoints = PlayerPrefs.GetInt("SavePoints");
+        }        
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -33,9 +53,12 @@ public class MainManager : MonoBehaviour
                 Vector3 position = new Vector3(-1.5f + step * x, 2.5f + i * 0.3f, 0);
                 var brick = Instantiate(BrickPrefab, position, Quaternion.identity);
                 brick.PointValue = pointCountArray[i];
-                brick.onDestroyed.AddListener(AddPoint);
+                brick.onDestroyed.AddListener(Instance.AddPoint);
             }
         }
+        
+        
+        
     }
 
     private void Update()
@@ -54,18 +77,21 @@ public class MainManager : MonoBehaviour
             }
         }
         else if (m_GameOver)
-        {
+        {                      
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
         }
+        BestScoreText.text = "Best Score : Name : " + m_BestPoints;
     }
 
     void AddPoint(int point)
     {
         m_Points += point;
         ScoreText.text = $"Score : {m_Points}";
+
+        BestPointsCounter();
     }
 
     public void GameOver()
@@ -73,4 +99,23 @@ public class MainManager : MonoBehaviour
         m_GameOver = true;
         GameOverText.SetActive(true);
     }
+    public void BestPointsCounter()
+    {
+        if (m_Points > m_BestPoints)
+        {
+            m_BestPoints = m_Points;
+        }
+        PlayerPrefs.SetInt("SavePoints", m_BestPoints);
+
+    }
+    public void ResetPoints()
+    {
+        m_Points = 0;
+    }
+    public void ResetBestPoints()
+    {
+        PlayerPrefs.DeleteKey("SavePoints");
+        m_BestPoints = 0;
+    }
+    
 }
