@@ -17,27 +17,34 @@ public class MainManager : MonoBehaviour
     public GameObject GameOverText;
     public Text BestScoreText;
     
-    
+    //score & best score
     private bool m_Started = false;
     public int m_Points;
     public int m_BestPoints;
-    
-    
+
+    //player name & best player name
+    public string playerName;
+    public string bestPlayerName;
+    public Text currentName;
+        
     public bool m_GameOver = false;
 
     public void Awake()
     {
-        if (Instance != null)
-        {
-            Destroy(gameObject);
-            return;
-        }
+       
         Instance = this;
-        DontDestroyOnLoad(gameObject);
-        if (PlayerPrefs.HasKey("SavePoints"))
+        
+        if (PlayerPrefs.HasKey("SavePoints") && PlayerPrefs.HasKey("SaveBestName"))
         {
             m_BestPoints = PlayerPrefs.GetInt("SavePoints");
+            bestPlayerName = PlayerPrefs.GetString("SaveBestName");
         }        
+        if (PlayerPrefs.HasKey("SaveName"))
+        {
+            playerName = PlayerPrefs.GetString("SaveName");
+            currentName.text = "Current Player : " + playerName;
+        }     
+        
     }
     // Start is called before the first frame update
     void Start()
@@ -55,8 +62,7 @@ public class MainManager : MonoBehaviour
                 brick.PointValue = pointCountArray[i];
                 brick.onDestroyed.AddListener(Instance.AddPoint);
             }
-        }
-        
+        }   
         
         
     }
@@ -77,13 +83,15 @@ public class MainManager : MonoBehaviour
             }
         }
         else if (m_GameOver)
-        {                      
+        {            
             if (Input.GetKeyDown(KeyCode.Space))
             {
+                
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
             }
         }
-        BestScoreText.text = "Best Score : Name : " + m_BestPoints;
+        
+        BestScoreText.text = "Best Score : " + bestPlayerName + " : " + m_BestPoints;
     }
 
     void AddPoint(int point)
@@ -104,8 +112,15 @@ public class MainManager : MonoBehaviour
         if (m_Points > m_BestPoints)
         {
             m_BestPoints = m_Points;
+            bestPlayerName = playerName;
+            
         }
         PlayerPrefs.SetInt("SavePoints", m_BestPoints);
+        PlayerPrefs.SetString("SaveBestName", bestPlayerName);
+
+    }
+    public void BestNameSave()
+    {
 
     }
     public void ResetPoints()
@@ -115,7 +130,9 @@ public class MainManager : MonoBehaviour
     public void ResetBestPoints()
     {
         PlayerPrefs.DeleteKey("SavePoints");
+        PlayerPrefs.DeleteKey("SaveBestName");
         m_BestPoints = 0;
+        bestPlayerName = "none";
     }
     
 }
